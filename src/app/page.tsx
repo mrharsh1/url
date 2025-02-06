@@ -1,101 +1,119 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+
+// Define the type for each link
+interface Link {
+  id: number;
+  url: string;
+  shortUrl?: string; // This is optional because it's set after generating a short URL
+  clicks: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [links, setLinks] = useState<Link[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [customUrl, setCustomUrl] = useState<string>(""); // State for the custom URL
+  const [error, setError] = useState<string>(""); // State for handling errors (optional)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+  // Function to create a short URL (simulated)
+  const shortenURL = (url: string): string => {
+    // Create a hash by using the URL and adding a random component for uniqueness
+    const randomSuffix = Math.random().toString(36).substring(2, 8); // Random string of length 6
+    const hash = btoa(url).slice(0, 6) + randomSuffix; // Use base64 + random suffix
+    return `https://short.ly/${hash}`;
+  };
+
+  useEffect(() => {
+    const initialLinks: Link[] = Array.from({ length: 10 }, (_, i) => ({
+      id: i + 1,
+      url: `https://www.instagram.com/reel/DFiJMOnTX2A/?igsh=dmFhMXJ3bWkzZ2Vh${i + 1}`,
+      clicks: 0,
+    }));
+
+    // Simulate shortening URLs on component mount
+    const shortenedLinks = initialLinks.map((link) => ({
+      ...link,
+      shortUrl: shortenURL(link.url), // Use the updated short URL function
+    }));
+
+    setLinks(shortenedLinks);
+    setLoading(false); // Set loading to false after URLs are processed
+  }, []);
+
+  const handleLinkClick = (id: number) => {
+    setLinks((prevLinks) =>
+      prevLinks.map((link) =>
+        link.id === id ? { ...link, clicks: link.clicks + 1 } : link
+      )
+    );
+  };
+
+  const handleCustomUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!customUrl) {
+      setError("Please enter a valid URL.");
+      return;
+    }
+
+    const newLink: Link = {
+      id: links.length + 1,
+      url: customUrl,
+      shortUrl: shortenURL(customUrl),
+      clicks: 0,
+    };
+
+    setLinks([...links, newLink]);
+    setCustomUrl(""); // Reset the input field
+    setError(""); // Reset error state
+  };
+
+  if (loading) {
+    return <div>Loading links...</div>; // Show a loading message while URLs are being processed
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">Dummy Instagram Reels Links</h1>
+      <p className="mb-6">
+        Click the shortened links below to track how many times each one is clicked:
+      </p>
+
+      {/* Custom URL input form */}
+      <div className="mb-6">
+        <form onSubmit={handleCustomUrlSubmit} className="flex space-x-4">
+          <input
+            type="url"
+            value={customUrl}
+            onChange={(e) => setCustomUrl(e.target.value)}
+            placeholder="Enter your custom URL"
+            className="border p-2 w-1/2"
+            required
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+            Shorten URL
+          </button>
+        </form>
+        {error && <p className="text-red-600 mt-2">{error}</p>} {/* Display error */}
+      </div>
+
+      {/* Display links */}
+      <ul className="space-y-2">
+        {links.map((link) => (
+          <li key={link.id} className="flex justify-between items-center">
+            <a
+              href={link.url} // Keep the original URL for redirection
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleLinkClick(link.id)}
+              className="text-blue-600 hover:underline"
+            >
+              {link.shortUrl}
+            </a>
+            <span className="ml-4 text-gray-600">{link.clicks} clicks</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
